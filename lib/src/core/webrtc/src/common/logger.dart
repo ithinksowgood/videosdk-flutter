@@ -1,0 +1,38 @@
+import 'dart:developer';
+
+// ignore: constant_identifier_names
+const String APP_NAME = 'videosdk-client';
+
+typedef LoggerDebug = void Function(dynamic message);
+
+class Logger {
+  final String? _prefix;
+
+  late LoggerDebug debug;
+  late LoggerDebug warn;
+  late LoggerDebug error;
+
+  Logger(this._prefix) {
+    if (_prefix != null) {
+      debug = (dynamic message) {
+        log('$APP_NAME:$_prefix $message');
+      };
+      warn = (dynamic message) {
+        log('$APP_NAME:WARN:$_prefix $message');
+      };
+      error = (dynamic message) {
+        log('$APP_NAME:ERROR:$_prefix $message');
+      };
+    } else {
+      debug = (dynamic message) {
+        log('$APP_NAME $message');
+      };
+      warn = (dynamic message) {
+        log('$APP_NAME:WARN $message');
+      };
+      error = (dynamic message) {
+        log('$APP_NAME:ERROR $message');
+      };
+    }
+  }
+}

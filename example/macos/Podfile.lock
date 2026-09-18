@@ -1,0 +1,35 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - videosdk (0.0.1):
+    - FlutterMacOS
+  - videosdk_webrtc (0.0.17):
+    - FlutterMacOS
+    - WebRTC-SDK (= 137.7151.04)
+  - WebRTC-SDK (137.7151.04)
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - videosdk (from `Flutter/ephemeral/.symlinks/plugins/videosdk/macos`)
+  - videosdk_webrtc (from `Flutter/ephemeral/.symlinks/plugins/videosdk_webrtc/macos`)
+
+SPEC REPOS:
+  trunk:
+    - WebRTC-SDK
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  videosdk:
+    :path: Flutter/ephemeral/.symlinks/plugins/videosdk/macos
+  videosdk_webrtc:
+    :path: Flutter/ephemeral/.symlinks/plugins/videosdk_webrtc/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  videosdk: 1791c7b58cd6118da35a29d95cf74f2495fa15fd
+  videosdk_webrtc: 180078f3d8c4ff9a994fef95e6f65dd3042ac195
+  WebRTC-SDK: 40d4f5ba05cadff14e4db5614aec402a633f007e
+
+PODFILE CHECKSUM: 0d3963a09fc94f580682bd88480486da345dc3f0
+
+COCOAPODS: 1.17.0

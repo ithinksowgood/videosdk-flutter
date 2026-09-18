@@ -1,0 +1,52 @@
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+
+    // The integration_test plugin asks for open-ended versions
+    // (androidx.test:runner:1.2+ and friends). videosdk_webrtc adds a jitpack
+    // repository to every project, and resolving an open-ended version means
+    // listing versions from every repository — so if jitpack is unreachable the
+    // whole build fails, even though the artifacts live on google().
+    // Pinning exact versions removes the lookup entirely.
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.test:runner:1.5.2'
+            force 'androidx.test:rules:1.5.0'
+            force 'androidx.test.espresso:espresso-core:3.5.1'
+        }
+    }
+
+    // permission_handler 13 (pulled in by the SDK's widened constraint) requires
+    // the app to compile at SDK 37, which needs AGP 8.13. AGP 8.13 also enforces
+    // AAR-metadata checks strictly, and some third-party plugins (e.g. fluttertoast
+    // 8.2.x) are still compiled against android-33 while their own androidx
+    // dependencies require 34+. Raise only those stale plugins — the app module and
+    // anything already on 34+ are left alone. Must be registered before the
+    // evaluationDependsOn(':app') block below, which forces evaluation.
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            def compileSdk = project.android.compileSdkVersion
+            if (compileSdk instanceof String && compileSdk.startsWith('android-')) {
+                def raw = compileSdk.substring('android-'.length())
+                def major = (raw.contains('.') ? raw.split('\\.')[0] : raw).toInteger()
+                if (major < 34) {
+                    project.android.compileSdkVersion 36
+                }
+            }
+        }
+    }
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

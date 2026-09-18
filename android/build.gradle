@@ -1,0 +1,56 @@
+buildscript {
+    ext.kotlin_version = '1.9.24'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'com.android.library'
+
+group = 'live.videosdk.videosdk'
+version = '1.0-SNAPSHOT'
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+def agpMajor = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')[0].toInteger()
+def builtInKotlinActive = agpMajor >= 9 &&
+    (!project.hasProperty('android.builtInKotlin') ||
+        Boolean.parseBoolean(project.property('android.builtInKotlin').toString()))
+if (!builtInKotlinActive) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace = "live.videosdk.videosdk"
+    compileSdkVersion 36
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    if (project.plugins.hasPlugin('org.jetbrains.kotlin.android')) {
+        kotlinOptions {
+            jvmTarget = '17'
+        }
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        minSdkVersion 23
+    }
+}
