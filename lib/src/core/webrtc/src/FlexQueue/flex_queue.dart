@@ -81,7 +81,7 @@ class FlexQueue {
           // nothing on the web, so a failing consume task was invisible on
           // Safari; print() reaches the console, which the app captures.
           // ignore: avoid_print
-          print('SOWGOOD FlexQueue task failed (${task.message}): $error\n$st');
+          print('videosdk FlexQueue task failed (${task.message}): $error\n$st');
           task.errorCallbackFun?.call(error);
         } finally {
           isBusy = false;
