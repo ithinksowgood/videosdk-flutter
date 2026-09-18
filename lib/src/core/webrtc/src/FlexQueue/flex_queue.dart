@@ -77,6 +77,11 @@ class FlexQueue {
         } catch (error, st) {
           log(error.toString());
           log(st.toString());
+          // SOWGOOD DIAGNOSTIC (2026-09-18): dart:developer's log() prints
+          // nothing on the web, so a failing consume task was invisible on
+          // Safari; print() reaches the console, which the app captures.
+          // ignore: avoid_print
+          print('SOWGOOD FlexQueue task failed (${task.message}): $error\n$st');
           task.errorCallbackFun?.call(error);
         } finally {
           isBusy = false;
