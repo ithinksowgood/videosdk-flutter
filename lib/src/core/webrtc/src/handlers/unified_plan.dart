@@ -261,7 +261,18 @@ class UnifiedPlan extends HandlerInterface {
       // Store in the map.
       _mapMidTransceiver[localId] = transceiver;
 
-      final remoteStreams = _pc!.getRemoteStreams();
+      // getRemoteStreams() is a deprecated, Chrome-only API: Safari has no such
+      // method, the call threw NoSuchMethodError inside the consume task, the
+      // task queue swallowed it, and a Safari viewer never got a remote stream
+      // (SowGood, 2026-09-18: an iPhone in Safari heard nothing from a room
+      // VideoSDK's own JS player played fine). The stream is built from the
+      // receiver's track below when the lookup yields nothing.
+      List<MediaStream?> remoteStreams;
+      try {
+        remoteStreams = _pc!.getRemoteStreams();
+      } catch (_) {
+        remoteStreams = <MediaStream?>[];
+      }
 
       // Try multiple methods to find or create the stream
       MediaStream? stream;
@@ -287,6 +298,14 @@ class UnifiedPlan extends HandlerInterface {
       if (stream == null && remoteStreams.isNotEmpty) {
         stream = remoteStreams
             .firstWhereOrNull((s) => s != null && s.id != 'probator');
+      }
+
+      // Method 4 (every browser): a stream carrying the receiver's track.
+      if (stream == null && transceiver.receiver.track != null) {
+        stream = await createLocalMediaStream(
+          options.rtpParameters.rtcp?.cname ?? options.trackId ?? localId,
+        );
+        await stream.addTrack(transceiver.receiver.track!);
       }
 
       if (stream == null) {
