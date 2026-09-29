@@ -27,6 +27,8 @@ export 'src/core/device_info.dart'
 export 'src/core/room/notification_data.dart' show NotificationInfo;
 export 'src/core/room/participant.dart' show Participant;
 export 'src/core/room/stream.dart' show Stream;
+export 'src/core/webrtc/src/FlexQueue/flex_queue.dart'
+    show sowgoodFlexTaskFailed, sowgoodFlexTaskStalled, sowgoodFlexStallAfter;
 export 'src/core/room/participant_pin_state.dart'
     show ParticipantPinState, PinType;
 export 'src/core/room/custom_track.dart' show CustomTrack, CustomTrackKind;
