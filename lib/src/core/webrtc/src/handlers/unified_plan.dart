@@ -17,6 +17,7 @@ import 'sdp/common_utils.dart';
 import 'sdp/media_section.dart';
 import 'sdp/remote_sdp.dart';
 import 'sdp/unified_plan_utils.dart';
+import 'transceiver_mid.dart';
 
 // Top-level helpers required by compute() — must be top-level, not closures.
 Map<String, dynamic> _parseSdp(String sdp) =>
@@ -250,9 +251,13 @@ class UnifiedPlan extends HandlerInterface {
 
       final transceivers = await _pc!.getTransceivers();
 
-      RTCRtpTransceiver? transceiver = transceivers.firstWhereOrNull(
-        (RTCRtpTransceiver t) => t.mid == localId,
-      );
+      // Not `t.mid == localId` over the whole list: on the web reading the mid
+      // of a transceiver the browser keeps without one throws, and Safari
+      // threw here after the first remote mic went off - every later receive
+      // failed and no new remote sound arrived (SowGood, 2026-10-03; see
+      // transceiver_mid.dart).
+      RTCRtpTransceiver? transceiver =
+          transceiverWithMid(transceivers, localId);
 
       if (transceiver == null) {
         throw ('new RTCRtpTransceiver not found');
@@ -989,7 +994,9 @@ class UnifiedPlan extends HandlerInterface {
       throw ('associated RTCRtpTransceiveer not found');
     }
 
-    _remoteSdp.closeMediaSection(transceiver.mid);
+    // localId is the mid the transceiver was stored under; reading
+    // transceiver.mid again can throw on the web (transceiver_mid.dart).
+    _remoteSdp.closeMediaSection(localId);
 
     RTCSessionDescription offer =
         RTCSessionDescription(_remoteSdp.getSdp(), 'offer');
@@ -1022,7 +1029,8 @@ class UnifiedPlan extends HandlerInterface {
 
     // await transceiver.sender.replaceTrack(null);
     await _pc!.removeTrack(transceiver.sender);
-    _remoteSdp.closeMediaSection(transceiver.mid);
+    // localId is the mid the transceiver was stored under (see stopReceiving).
+    _remoteSdp.closeMediaSection(localId);
 
     RTCSessionDescription offer = await _pc!.createOffer({});
 
