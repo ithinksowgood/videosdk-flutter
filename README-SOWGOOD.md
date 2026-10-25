@@ -1,4 +1,4 @@
-# videosdk (Flutter) 3.12.1 + SowGood's Safari fixes
+# videosdk (Flutter) 3.12.1 + SowGood's Safari and Firefox fixes
 
 This is the published `videosdk` 3.12.1 package from pub.dev, unchanged except for:
 
@@ -23,8 +23,16 @@ This is the published `videosdk` 3.12.1 package from pub.dev, unchanged except f
    then on every receive failed and no new remote sound reached that listener, while
    Chrome in the same room heard every cycle (2026-10-03). Test:
    `test/transceiver_mid_test.dart`.
+4. `lib/src/core/webrtc/src/handlers/sdp/media_section.dart` `MediaObject.toMap()`:
+   `a=extmap-allow-mixed` is written as the list sdp_transform's grammar expects (it is a
+   PUSH attribute there: the parser stores a list, the writer calls `forEach` on it)
+   instead of a bare `true`. Firefox puts the attribute in each media section, so the
+   `send()` answer copied it, `write()` threw `forEach` on a bool, and a Firefox viewer
+   who accepted the host's invitation to speak never sent mic or camera (2026-10-24,
+   Firefox 158 on a Mac; Chrome puts it at the session level, which `SdpObject` drops).
+   Test: `test/extmap_allow_mixed_test.dart`.
 
-Found and fixed by ITHINKSOW LLC (SowGood) on 2026-09-18 (1, 2) and 2026-10-03 (3). The
+Found and fixed by ITHINKSOW LLC (SowGood) on 2026-09-18 (1, 2), 2026-10-03 (3) and 2026-10-25 (4). The
 `getRemoteStreams()` call exists in videosdk 4.0.1 too. Used via `dependency_overrides`
 until an upstream release carries the fixes.
 License: the package's own (see LICENSE).

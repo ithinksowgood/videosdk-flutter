@@ -800,8 +800,16 @@ class MediaObject {
     if (rids != null) {
       result['rids'] = rids!.map((Rid r) => r.toMap()).toList();
     }
-    if (extmapAllowMixed != null && extmapAllowMixed == true) {
-      result['extmapAllowMixed'] = extmapAllowMixed;
+    // sdp_transform 0.3.2 has a=extmap-allow-mixed as a PUSH attribute: its
+    // parser stores a list of {'extmap-allow-mixed': 'extmap-allow-mixed'} and
+    // its writer calls forEach on the value. A bare `true` made write() throw
+    // (forEach on a bool). Firefox puts the attribute in each media section,
+    // so every send() answer there failed and a promoted viewer's mic and
+    // camera never started (SowGood, 2026-10-24).
+    if (extmapAllowMixed == true) {
+      result['extmapAllowMixed'] = [
+        {'extmap-allow-mixed': 'extmap-allow-mixed'},
+      ];
     }
     if (rtcpRsize != null) {
       result['rtcpRsize'] = rtcpRsize;
