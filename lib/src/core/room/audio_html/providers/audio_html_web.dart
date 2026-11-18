@@ -108,9 +108,32 @@ class AudioHTMLWeb implements AudioHTMLInterface {
 
     for (var i = 0; i < audioElements.length; i++) {
       if ((audioElements.item(i)!).hasProperty("setSinkId" as JSAny) as bool) {
-        audioElements
-            .item(i)!
-            .callMethod("setSinkId" as JSAny, [deviceId] as JSAny?);
+        // SowGood (2026-11-17): setSinkId returns a promise, which was
+        // dropped. Safari refuses the call outside a tap ("A user gesture is
+        // required", SOWGOOD-2PD) and Chrome can abort it ("The operation
+        // could not be performed and was aborted", SOWGOOD-7N); either one
+        // surfaced as an unhandled rejection. The promise is handled and a
+        // failure goes to sowgoodAudioFailed.
+        final asked = DateTime.now();
+        try {
+          final result = audioElements
+              .item(i)!
+              .callMethod<JSAny?>("setSinkId".toJS, deviceId.toJS);
+          if (result != null) {
+            (result as JSPromise<JSAny?>).toDart.then<void>(
+              (_) {},
+              onError: (Object error) {
+                _reportAudioFailure(
+                  'setSinkId',
+                  error,
+                  pending: DateTime.now().difference(asked),
+                );
+              },
+            );
+          }
+        } catch (error) {
+          _reportAudioFailure('setSinkId', error);
+        }
       }
     }
   }

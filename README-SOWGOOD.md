@@ -31,8 +31,25 @@ This is the published `videosdk` 3.12.1 package from pub.dev, unchanged except f
    who accepted the host's invitation to speak never sent mic or camera (2026-10-24,
    Firefox 158 on a Mac; Chrome puts it at the session level, which `SdpObject` drops).
    Test: `test/extmap_allow_mixed_test.dart`.
+5. `lib/src/core/room/audio_html/providers/audio_html_web.dart` `startAudio()`: the
+   element's `play()` is awaited inside the method, which never throws; it used to end
+   in `return audioElement.play()`, the browser's own promise, and its caller does not
+   await it. A rejected `play()` - Safari refusing a page's first sound without a tap
+   (`NotAllowedError`), or an element stopped before it had started (`AbortError`) - was
+   an unhandled promise rejection: an error with no user and no trail (2026-11-17). A
+   failure goes to the hook `sowgoodAudioFailed` (`SowgoodAudioFailure`, in
+   `audio_html_interface.dart`, exported from `lib/videosdk.dart`), or is logged when no
+   hook is set. What a listener hears is unchanged. Test: `test/audio_failure_test.dart`.
+6. The speaker (audio output) on the web: `setAudioOutputDevice()` handles the promise
+   `setSinkId()` returns (same hook), and `room.dart` re-applies a speaker to each new
+   remote audio element only when the member picked one (`_sowgoodSpeakerChosenOnWeb`,
+   set in `switchAudioDevice`). At join the SDK picks the first listed output for itself
+   and re-applied it to every `<audio>` at every new speaker; outside a tap Safari
+   refuses that ("A user gesture is required") and Chrome can abort it ("The operation
+   could not be performed and was aborted"), each an unhandled rejection (2026-09-28,
+   2026-11-17).
 
-Found and fixed by ITHINKSOW LLC (SowGood) on 2026-09-18 (1, 2), 2026-10-03 (3) and 2026-10-25 (4). The
+Found and fixed by ITHINKSOW LLC (SowGood) on 2026-09-18 (1, 2), 2026-10-03 (3), 2026-10-25 (4) and 2026-11-17 (5, 6). The
 `getRemoteStreams()` call exists in videosdk 4.0.1 too. Used via `dependency_overrides`
 until an upstream release carries the fixes.
 License: the package's own (see LICENSE).

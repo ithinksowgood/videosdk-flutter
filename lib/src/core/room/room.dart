@@ -175,6 +175,15 @@ class Room {
   AudioDeviceInfo? _selectedAudioOutput;
   AudioDeviceInfo? _selectedAudioInput;
 
+  // SowGood (2026-11-17): true once the member has picked a speaker on the
+  // web (switchAudioDevice - on the web only the app calls it). At join the
+  // SDK picks the first listed output for itself (_selectedAudioOutput) and
+  // used to re-apply it to every <audio> element at every new speaker: for a
+  // member who never picked one that sets nothing new, and the browser may
+  // refuse or abort the call (SOWGOOD-2PD / 7N). Only a member's own choice
+  // is re-applied now.
+  bool _sowgoodSpeakerChosenOnWeb = false;
+
   // States
   bool _cameraInProgress = false;
   bool _micInProgress = false;
@@ -9037,6 +9046,7 @@ class Room {
               .selectAudioOutput(AudioOutputOptions(deviceId: device.deviceId));
         }
       } else {
+        _sowgoodSpeakerChosenOnWeb = true;
         AudioHTMLInterface().setAudioOutputDevice(device.deviceId);
       }
 
@@ -10493,7 +10503,7 @@ class Room {
             "audio": _peers[peerId]!.audio
           });
 
-          if (_selectedAudioOutput != null) {
+          if (_selectedAudioOutput != null && _sowgoodSpeakerChosenOnWeb) {
             AudioHTMLInterface()
                 .setAudioOutputDevice(_selectedAudioOutput!.deviceId);
           }
