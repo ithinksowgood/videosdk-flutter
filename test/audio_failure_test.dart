@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:videosdk/src/core/room/audio_html/audio_html_interface.dart';
+import 'package:videosdk/src/core/room/audio_html/sowgood_audio_failure.dart';
 
 // The error texts are the ones Sentry recorded at the 2026-11-17 event
 // (SOWGOOD-2RW, 2RY, 7N, 2PD).

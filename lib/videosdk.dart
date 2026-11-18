@@ -29,7 +29,7 @@ export 'src/core/room/participant.dart' show Participant;
 export 'src/core/room/stream.dart' show Stream;
 export 'src/core/webrtc/src/FlexQueue/flex_queue.dart'
     show sowgoodFlexTaskFailed, sowgoodFlexTaskStalled, sowgoodFlexStallAfter;
-export 'src/core/room/audio_html/audio_html_interface.dart'
+export 'src/core/room/audio_html/sowgood_audio_failure.dart'
     show sowgoodAudioFailed, SowgoodAudioFailure, sowgoodDomErrorName;
 export 'src/core/room/participant_pin_state.dart'
     show ParticipantPinState, PinType;

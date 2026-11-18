@@ -5,6 +5,7 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:videosdk/src/core/room/audio_html/audio_html_interface.dart';
+import 'package:videosdk/src/core/room/audio_html/providers/js_error_name.dart';
 import 'package:videosdk/src/core/webrtc/webrtc_client.dart';
 import 'package:web/web.dart' as web;
 
@@ -152,7 +153,8 @@ void _reportAudioFailure(
     final text = '$error';
     final failure = SowgoodAudioFailure(
       operation: operation,
-      errorName: sowgoodDomErrorName(text),
+      // The error object's own name first; its text only as the fallback.
+      errorName: sowgoodJsErrorName(error) ?? sowgoodDomErrorName(text),
       message: text,
       trackId: trackId,
       pending: pending,
