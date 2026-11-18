@@ -13,43 +13,66 @@ class AudioHTMLWeb implements AudioHTMLInterface {
 
   @override
   Future<dynamic> startAudio(Consumer? audioConsumer) async {
-    // ignore: unnecessary_null_comparison
-    if (audioConsumer == null || audioConsumer.track == null) {
-      return;
-    }
-
-    MediaStreamTrack track = audioConsumer.track;
-
-    if (track is! MediaStreamTrackWeb) {
-      return;
-    }
-
-    final elementId = "audio_${track.id}";
-    var audioElement = web.document.getElementById(elementId);
-    if (audioElement == null) {
-      audioElement = web.HTMLAudioElement()
-        ..id = elementId
-        ..autoplay = true;
-      findOrCreateAudioContainer().append(audioElement);
-      _audioElements[track.id!] = audioElement;
-    }
-
-    if (audioElement is! web.HTMLAudioElement) {
-      return;
-    }
-    var _srcObject = audioConsumer.stream as MediaStreamWeb;
-    // ignore: unnecessary_null_comparison
-    if (null != _srcObject) {
-      if (audioConsumer.stream.getAudioTracks().isNotEmpty) {
-        final audioStream = web.MediaStream();
-        for (final track in _srcObject.jsStream.getAudioTracks().toDart) {
-          audioStream.addTrack(track);
-        }
-        audioElement.srcObject = audioStream;
-        return audioElement.play();
+    // SowGood (2026-11-17): the caller does not await this, and it used to
+    // end in `return audioElement.play()` - the browser's own promise, which
+    // nothing handled. A refusal (Safari wants a tap for a page's first
+    // sound) or an abort (the element stopped before it started) then
+    // surfaced as an unhandled rejection with no user and no trail
+    // (SOWGOOD-2RW / 2RY). play() is awaited here and a failure goes to
+    // sowgoodAudioFailed; this method never throws.
+    String? trackId;
+    try {
+      // ignore: unnecessary_null_comparison
+      if (audioConsumer == null || audioConsumer.track == null) {
+        return;
       }
-    } else {
-      log("srcObject null");
+
+      MediaStreamTrack track = audioConsumer.track;
+
+      if (track is! MediaStreamTrackWeb) {
+        return;
+      }
+      trackId = track.id;
+
+      final elementId = "audio_${track.id}";
+      var audioElement = web.document.getElementById(elementId);
+      if (audioElement == null) {
+        audioElement = web.HTMLAudioElement()
+          ..id = elementId
+          ..autoplay = true;
+        findOrCreateAudioContainer().append(audioElement);
+        _audioElements[track.id!] = audioElement;
+      }
+
+      if (audioElement is! web.HTMLAudioElement) {
+        return;
+      }
+      var _srcObject = audioConsumer.stream as MediaStreamWeb;
+      // ignore: unnecessary_null_comparison
+      if (null != _srcObject) {
+        if (audioConsumer.stream.getAudioTracks().isNotEmpty) {
+          final audioStream = web.MediaStream();
+          for (final track in _srcObject.jsStream.getAudioTracks().toDart) {
+            audioStream.addTrack(track);
+          }
+          audioElement.srcObject = audioStream;
+          final asked = DateTime.now();
+          try {
+            await audioElement.play().toDart;
+          } catch (error) {
+            _reportAudioFailure(
+              'play',
+              error,
+              trackId: trackId,
+              pending: DateTime.now().difference(asked),
+            );
+          }
+        }
+      } else {
+        log("srcObject null");
+      }
+    } catch (error) {
+      _reportAudioFailure('startAudio', error, trackId: trackId);
     }
   }
 
@@ -91,6 +114,33 @@ class AudioHTMLWeb implements AudioHTMLInterface {
       }
     }
   }
+}
+
+/// Hands a failed browser call to the app's hook (sowgoodAudioFailed), or
+/// logs it when no hook is set. Never throws: reporting must not break
+/// playback.
+void _reportAudioFailure(
+  String operation,
+  Object error, {
+  String? trackId,
+  Duration pending = Duration.zero,
+}) {
+  try {
+    final text = '$error';
+    final failure = SowgoodAudioFailure(
+      operation: operation,
+      errorName: sowgoodDomErrorName(text),
+      message: text,
+      trackId: trackId,
+      pending: pending,
+    );
+    final hook = sowgoodAudioFailed;
+    if (hook != null) {
+      hook(failure);
+    } else {
+      log('$failure');
+    }
+  } catch (_) {}
 }
 
 AudioHTMLInterface getInterface() => AudioHTMLWeb();
